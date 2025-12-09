@@ -2,7 +2,20 @@
 
 import React, { useState, useEffect } from "react";
 
-const events = [
+// Define event type
+type Event = {
+  title: string;
+  desc: string;
+  details: string;
+  bg: string;
+  border: string;
+  text: string;
+  borderColor: string;
+  startDate: Date;
+  endDate: Date;
+};
+
+const events: Event[] = [
   {
     title: "Cyber Security Treasure Hunt",
     desc: "The event emphasized critical thinking, time management, and cybersecurity fundamentals",
@@ -11,6 +24,8 @@ const events = [
     border: "border-[#E8A2B5]",
     text: "text-[#6d1c22]",
     borderColor: "#E8A2B5",
+    startDate: new Date("2024-11-15T14:00:00"),
+    endDate: new Date("2024-11-15T17:00:00"),
   },
   {
     title: "Sherlock IT!",
@@ -20,6 +35,8 @@ const events = [
     border: "border-[#ABEEAB]",
     text: "text-[#095709]",
     borderColor: "#ABEEAB",
+    startDate: new Date("2024-12-05T10:00:00"),
+    endDate: new Date("2024-12-05T16:00:00"),
   },
   {
     title: "VITopoly RUSH",
@@ -29,6 +46,8 @@ const events = [
     border: "border-[#B3D9FF]",
     text: "text-[#0A3A6b]",
     borderColor: "#B3D9FF",
+    startDate: new Date("2025-12-20T09:00:00"),
+    endDate: new Date("2025-12-20T18:00:00"),
   },
   {
     title: "How Hackers Really Hack 4.0",
@@ -38,6 +57,8 @@ const events = [
     border: "border-[#B3D9FF]",
     text: "text-[#0A3A6b]",
     borderColor: "#B3D9FF",
+    startDate: new Date("2026-02-20T10:00:00"),
+    endDate: new Date("2026-02-21T17:00:00"),
   },
   {
     title: "Season of AI: India",
@@ -47,6 +68,8 @@ const events = [
     border: "border-[#FFD782]",
     text: "text-[#865B00]",
     borderColor: "#FFD782",
+    startDate: new Date("2026-03-01T15:00:00"),
+    endDate: new Date("2026-03-01T18:00:00"),
   },
   {
     title: "MLSA Explained",
@@ -56,8 +79,49 @@ const events = [
     border: "border-[#E8A2B5]",
     text: "text-[#6d1c22]",
     borderColor: "#E8A2B5",
+    startDate: new Date("2025-12-15T11:00:00"),
+    endDate: new Date("2025-12-15T13:00:00"),
   },
 ];
+
+// Sorting function to display upcoming events first, then past events
+const sortEventsByDate = (eventsList: Event[]): Event[] => {
+  const now = new Date();
+
+  // Upcoming events (future) sorted by earliest first
+  const upcoming = eventsList
+    .filter(event => event.startDate >= now)
+    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+
+  // Past events sorted by most recent first
+  const past = eventsList
+    .filter(event => event.startDate < now)
+    .sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
+
+  return [...upcoming, ...past];
+};
+
+// Format event date and time for display
+const formatEventDate = (startDate: Date, endDate: Date): string => {
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  };
+
+  const start = new Intl.DateTimeFormat('en-US', options).format(startDate);
+
+  // If same day event, show only start time, otherwise show date range
+  if (startDate.toDateString() === endDate.toDateString()) {
+    return start;
+  } else {
+    const end = new Intl.DateTimeFormat('en-US', options).format(endDate);
+    return `${start} - ${end}`;
+  }
+};
 
 type LineProps = {
   left: string;
@@ -91,6 +155,9 @@ const Line: React.FC<LineProps> = ({
 const LandingPage = () => {
   const [openCard, setOpenCard] = useState<number | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Sort events by date (upcoming first, then past)
+  const sortedEvents = sortEventsByDate(events);
 
   // Detect system theme preference
   useEffect(() => {
@@ -162,7 +229,7 @@ const LandingPage = () => {
 
   const renderOverlay = () => {
     if (openCard === null) return null;
-    const event = events[openCard];
+    const event = sortedEvents[openCard];
     return (
       <div
         className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70"
@@ -207,7 +274,13 @@ const LandingPage = () => {
           </button>
           <span className="font-press-start text-3xl mb-4">{event.title}</span>
           <p
-            className="font-IBM Plex Mono text-base mb-4"
+            className="text-sm mb-2"
+            style={{ fontFamily: "'IBM Plex Mono', monospace", opacity: 0.9 }}
+          >
+            📅 {formatEventDate(event.startDate, event.endDate)}
+          </p>
+          <p
+            className="text-base mb-4"
             style={{ fontFamily: "'IBM Plex Mono', monospace" }}
           >
             {event.desc}
@@ -220,7 +293,7 @@ const LandingPage = () => {
     );
   };
 
-  const getCardClass = (event: typeof events[0]) =>
+  const getCardClass = (event: Event) =>
     `pixel-corners font-press-start ${event.bg} ${event.text} cursor-pointer transition-all duration-200${openCard === null ? " hover:scale-105 hover:shadow-xl" : ""
     }`;
 
@@ -344,7 +417,7 @@ const LandingPage = () => {
         {/* First row of 3 event boxes */}
         <div className="flex flex-row justify-center mb-2"
           style={{ gap: "min(2vw, 32px)" }}>
-          {events.slice(0, 3).map((event, i) => (
+          {sortedEvents.slice(0, 3).map((event, i) => (
             <div
               key={i}
               className={getCardClass(event)}
@@ -366,7 +439,17 @@ const LandingPage = () => {
             >
               <span style={{ fontSize: "min(1.6vw, 24px)" }}>{event.title}</span>
               <p
-                className="info-text font-normal mt-4"
+                className="text-xs mt-2"
+                style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "min(0.7vw, 10px)",
+                  opacity: 0.8
+                }}
+              >
+                📅 {formatEventDate(event.startDate, event.endDate)}
+              </p>
+              <p
+                className="info-text font-normal mt-2"
                 style={{
                   fontFamily: "'IBM Plex Mono', monospace",
                   fontSize: "min(0.8vw, 12px)"
@@ -423,7 +506,7 @@ const LandingPage = () => {
         {/* Second row of 3 event boxes */}
         <div className="flex flex-row justify-center mt-2 mb-16"
           style={{ gap: "min(2vw, 32px)" }}>
-          {events.slice(3, 6).map((event, i) => (
+          {sortedEvents.slice(3, 6).map((event, i) => (
             <div
               key={i + 3}
               className={getCardClass(event)}
@@ -445,7 +528,17 @@ const LandingPage = () => {
             >
               <span style={{ fontSize: "min(1.6vw, 24px)" }}>{event.title}</span>
               <p
-                className="info-text font-normal mt-4"
+                className="text-xs mt-2"
+                style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "min(0.7vw, 10px)",
+                  opacity: 0.8
+                }}
+              >
+                📅 {formatEventDate(event.startDate, event.endDate)}
+              </p>
+              <p
+                className="info-text font-normal mt-2"
                 style={{
                   fontFamily: "'IBM Plex Mono', monospace",
                   fontSize: "min(0.8vw, 12px)"
