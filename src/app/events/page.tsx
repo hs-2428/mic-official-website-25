@@ -274,13 +274,13 @@ const LandingPage = () => {
           </button>
           <span className="font-press-start text-3xl mb-4">{event.title}</span>
           <p
-            className="font-IBM Plex Mono text-sm mb-2"
+            className="text-sm mb-2"
             style={{ fontFamily: "'IBM Plex Mono', monospace", opacity: 0.9 }}
           >
             📅 {formatEventDate(event.startDate, event.endDate)}
           </p>
           <p
-            className="font-IBM Plex Mono text-base mb-4"
+            className="text-base mb-4"
             style={{ fontFamily: "'IBM Plex Mono', monospace" }}
           >
             {event.desc}
@@ -439,7 +439,7 @@ const LandingPage = () => {
             >
               <span style={{ fontSize: "min(1.6vw, 24px)" }}>{event.title}</span>
               <p
-                className="font-IBM Plex Mono text-xs mt-2"
+                className="text-xs mt-2"
                 style={{
                   fontFamily: "'IBM Plex Mono', monospace",
                   fontSize: "min(0.7vw, 10px)",
@@ -528,7 +528,7 @@ const LandingPage = () => {
             >
               <span style={{ fontSize: "min(1.6vw, 24px)" }}>{event.title}</span>
               <p
-                className="font-IBM Plex Mono text-xs mt-2"
+                className="text-xs mt-2"
                 style={{
                   fontFamily: "'IBM Plex Mono', monospace",
                   fontSize: "min(0.7vw, 10px)",
