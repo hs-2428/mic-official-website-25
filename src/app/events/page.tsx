@@ -46,8 +46,8 @@ const events: Event[] = [
     border: "border-[#B3D9FF]",
     text: "text-[#0A3A6b]",
     borderColor: "#B3D9FF",
-    startDate: new Date("2025-01-15T09:00:00"),
-    endDate: new Date("2025-01-15T18:00:00"),
+    startDate: new Date("2025-12-20T09:00:00"),
+    endDate: new Date("2025-12-20T18:00:00"),
   },
   {
     title: "How Hackers Really Hack 4.0",
@@ -57,8 +57,8 @@ const events: Event[] = [
     border: "border-[#B3D9FF]",
     text: "text-[#0A3A6b]",
     borderColor: "#B3D9FF",
-    startDate: new Date("2025-02-20T10:00:00"),
-    endDate: new Date("2025-02-21T17:00:00"),
+    startDate: new Date("2026-02-20T10:00:00"),
+    endDate: new Date("2026-02-21T17:00:00"),
   },
   {
     title: "Season of AI: India",
@@ -68,8 +68,8 @@ const events: Event[] = [
     border: "border-[#FFD782]",
     text: "text-[#865B00]",
     borderColor: "#FFD782",
-    startDate: new Date("2025-03-01T15:00:00"),
-    endDate: new Date("2025-03-01T18:00:00"),
+    startDate: new Date("2026-03-01T15:00:00"),
+    endDate: new Date("2026-03-01T18:00:00"),
   },
   {
     title: "MLSA Explained",
