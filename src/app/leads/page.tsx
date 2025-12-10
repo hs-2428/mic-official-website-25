@@ -70,6 +70,7 @@ function useCloudFloat({ baseTop, baseLeft, amplitude = 30, speed = 1, phase = 0
 const MeetTheBoardPage: React.FC = () => {
   const [view, setView] = useState<'board' | 'departments'>('board');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [expandedDepartments, setExpandedDepartments] = useState<Set<string>>(new Set());
 
   // Define cloud positions using hooks at the top level
   const cloudPositions = [
@@ -110,6 +111,22 @@ const MeetTheBoardPage: React.FC = () => {
       }
       ::-webkit-scrollbar-thumb:hover {
         background: rgba(0, 0, 0, 0.3);
+      }
+      
+      /* Fade in animation for expanded departments */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      .animate-fadeIn {
+        animation: fadeIn 0.3s ease-out;
       }
       
       /* For Firefox */
@@ -174,6 +191,41 @@ const MeetTheBoardPage: React.FC = () => {
   };
 
   const themeColors = getThemeColors();
+
+  // Group leads by department
+  const departmentGroups = leadsData.reduce((acc, lead) => {
+    if (!acc[lead.title]) {
+      acc[lead.title] = [];
+    }
+    acc[lead.title].push(lead);
+    return acc;
+  }, {} as Record<string, typeof leadsData>);
+
+  // Define consistent color mapping for departments
+  const departmentColors: Record<string, { CardComponent: any; colorName: string }> = {
+    'AIML': { CardComponent: RedCard, colorName: 'Red' },
+    'CP': { CardComponent: BlueCard, colorName: 'Blue' },
+    'Content': { CardComponent: GreenCard, colorName: 'Green' },
+    'Cyber Security': { CardComponent: YellowCard, colorName: 'Yellow' },
+    'Design': { CardComponent: RedCard, colorName: 'Red' },
+    'Development': { CardComponent: BlueCard, colorName: 'Blue' },
+    'Entrepreneurship': { CardComponent: GreenCard, colorName: 'Green' },
+    'Management': { CardComponent: YellowCard, colorName: 'Yellow' },
+    'Social Media': { CardComponent: RedCard, colorName: 'Red' },
+    'UI/UX': { CardComponent: BlueCard, colorName: 'Blue' },
+  };
+
+  const toggleDepartment = (department: string) => {
+    setExpandedDepartments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(department)) {
+        newSet.delete(department);
+      } else {
+        newSet.add(department);
+      }
+      return newSet;
+    });
+  };
 
   // Prepare rows for departments view
   const rows = [];
@@ -286,22 +338,52 @@ const MeetTheBoardPage: React.FC = () => {
 
           {/* Departments View */}
           {view === 'departments' && (
-            <div className="flex flex-col items-center space-y-8 relative z-10">
-              {rows.map((rowData, rowIndex) => (
-                <div key={rowIndex} className="flex justify-center space-x-8">
-                  {rowData.map((data, index) => {
-                    const CardComponent = cardOrder[index % cardOrder.length];
-                    return (
-                      <CardComponent
-                        key={index}
-                        name={data.name}
-                        title={data.title}
-                        imageSrc={data.imageSrc}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
+            <div className="flex flex-col items-center space-y-6 relative z-10 w-full max-w-[1400px] px-4">
+              {Object.entries(departmentGroups).map(([department, leads]) => {
+                const isExpanded = expandedDepartments.has(department);
+                const { CardComponent, colorName } = departmentColors[department] || { CardComponent: RedCard, colorName: 'Red' };
+                
+                return (
+                  <div key={department} className="w-full">
+                    {/* Department Header - Clickable Folder */}
+                    <button
+                      onClick={() => toggleDepartment(department)}
+                      className={`w-full max-w-[800px] mx-auto h-[80px] flex items-center justify-between px-8 border-4 font-press-start text-black transition-all duration-300 hover:scale-105 ${
+                        colorName === 'Red' ? 'bg-[#FFDFE8] border-[#E8A2B5]' :
+                        colorName === 'Blue' ? 'bg-[#CBF1FD] border-[#B3D9FF]' :
+                        colorName === 'Green' ? 'bg-[#C5FFD8] border-[#ABEEAB]' :
+                        'bg-[#fff4dd] border-[#FFD782]'
+                      }`}
+                      style={{
+                        clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px))',
+                      }}
+                    >
+                      <div className="flex items-center gap-4">
+                        <span className="text-[24px]">{isExpanded ? '📂' : '📁'}</span>
+                        <span className="text-[18px] sm:text-[24px]">{department}</span>
+                        <span className={`text-[14px] sm:text-[16px] opacity-70`}>
+                          ({leads.length} {leads.length === 1 ? 'Lead' : 'Leads'})
+                        </span>
+                      </div>
+                      <span className="text-[24px]">{isExpanded ? '▲' : '▼'}</span>
+                    </button>
+
+                    {/* Department Leads - Expandable */}
+                    {isExpanded && (
+                      <div className="mt-6 flex flex-wrap justify-center gap-8 animate-fadeIn">
+                        {leads.map((lead, index) => (
+                          <CardComponent
+                            key={index}
+                            name={lead.name}
+                            title={lead.title}
+                            imageSrc={lead.imageSrc}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
