@@ -2,6 +2,80 @@
 
 import React, { useState, useEffect } from "react";
 
+// CSS animations for Pac-Man and ghosts
+const pacmanAnimation = `
+@keyframes pacmanMove {
+  0% {
+    left: -5%;
+  }
+  100% {
+    left: 105%;
+  }
+}
+
+@keyframes ghostFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+@keyframes ghostWobble {
+  0%, 100% {
+    transform: translateX(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateX(-5px) rotate(-5deg);
+  }
+  75% {
+    transform: translateX(5px) rotate(5deg);
+  }
+}
+
+@keyframes ghostEaten {
+  0%, 24%, 49%, 74%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  25%, 50%, 75% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  26%, 51%, 76% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.pellet-eaten {
+  animation: pelletEat 0.2s linear forwards;
+}
+
+@keyframes pelletEat {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0);
+    display: none;
+  }
+}
+`;
+
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement("style");
+  styleSheet.innerText = pacmanAnimation;
+  document.head.appendChild(styleSheet);
+}
+
 const events = [
   {
     title: "Cyber Security Treasure Hunt",
@@ -11,6 +85,8 @@ const events = [
     border: "border-[#E8A2B5]",
     text: "text-[#6d1c22]",
     borderColor: "#E8A2B5",
+    startDate: new Date("2024-11-15"),
+    endDate: new Date("2024-11-15"),
   },
   {
     title: "Sherlock IT!",
@@ -20,6 +96,8 @@ const events = [
     border: "border-[#ABEEAB]",
     text: "text-[#095709]",
     borderColor: "#ABEEAB",
+    startDate: new Date("2024-10-20"),
+    endDate: new Date("2024-10-20"),
   },
   {
     title: "VITopoly RUSH",
@@ -29,6 +107,8 @@ const events = [
     border: "border-[#B3D9FF]",
     text: "text-[#0A3A6b]",
     borderColor: "#B3D9FF",
+    startDate: new Date("2026-03-01"),
+    endDate: new Date("2026-03-01"),
   },
   {
     title: "How Hackers Really Hack 4.0",
@@ -38,6 +118,8 @@ const events = [
     border: "border-[#B3D9FF]",
     text: "text-[#0A3A6b]",
     borderColor: "#B3D9FF",
+    startDate: new Date("2025-02-15"),
+    endDate: new Date("2025-02-16"),
   },
   {
     title: "Season of AI: India",
@@ -47,6 +129,8 @@ const events = [
     border: "border-[#FFD782]",
     text: "text-[#865B00]",
     borderColor: "#FFD782",
+    startDate: new Date("2025-01-10"),
+    endDate: new Date("2025-01-10"),
   },
   {
     title: "MLSA Explained",
@@ -56,8 +140,57 @@ const events = [
     border: "border-[#E8A2B5]",
     text: "text-[#6d1c22]",
     borderColor: "#E8A2B5",
+    startDate: new Date("2024-12-05"),
+    endDate: new Date("2024-12-05"),
   },
 ];
+
+// Sorting function - displays upcoming events first, then past events from most recent to oldest
+const sortEventsByDate = (eventsArray: any[]) => {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0); // Normalize to midnight for date-only comparison
+
+  const upcomingEvents = eventsArray.filter((event: any) => {
+    const eventDate = new Date(event.startDate);
+    eventDate.setHours(0, 0, 0, 0);
+    return eventDate >= now;
+  });
+  
+  const pastEvents = eventsArray.filter((event: any) => {
+    const eventDate = new Date(event.startDate);
+    eventDate.setHours(0, 0, 0, 0);
+    return eventDate < now;
+  });
+
+  // Sort upcoming events by startDate (earliest first)
+  upcomingEvents.sort(
+    (a: any, b: any) => a.startDate.getTime() - b.startDate.getTime()
+  );
+
+  // Sort past events by startDate (most recent first)
+  pastEvents.sort((a: any, b: any) => b.startDate.getTime() - a.startDate.getTime());
+
+  return [...upcomingEvents, ...pastEvents];
+};
+
+// Helper function to determine if an event is upcoming
+const isUpcoming = (event: any) => {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const eventDate = new Date(event.startDate);
+  eventDate.setHours(0, 0, 0, 0);
+  return eventDate >= now;
+};
+
+// Helper function to format date
+const formatEventDate = (date: Date): string => {
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  };
+  return new Intl.DateTimeFormat("en-US", options).format(date);
+};
 
 type LineProps = {
   left: string;
@@ -91,6 +224,69 @@ const Line: React.FC<LineProps> = ({
 const LandingPage = () => {
   const [openCard, setOpenCard] = useState<number | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [eatenPellets, setEatenPellets] = useState<Set<number>>(new Set());
+  const [pacmanPosition, setPacmanPosition] = useState(0);
+  const [eatenGhosts, setEatenGhosts] = useState<Set<number>>(new Set());
+
+  // Sort events by date
+  const sortedEvents = sortEventsByDate(events);
+
+  // Animate Pac-Man position and eat pellets
+  useEffect(() => {
+    const animationDuration = 12000; // 12 seconds
+    const startTime = Date.now();
+    
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = (elapsed % animationDuration) / animationDuration;
+      const position = progress * 110 - 5; // -5% to 105%
+      
+      setPacmanPosition(position);
+      
+      // Calculate which pellets should be eaten
+      // Pac-Man's mouth is at the front (right side) of the sprite
+      // Account for Pac-Man's width and position its mouth correctly
+      const totalPellets = 144; // 96 + 48 pellets total
+      const pelletRowWidth = 110; // Total width from -5% to 105%
+      
+      // Pac-Man's mouth position (right edge of sprite)
+      const pacmanMouthPosition = position + 3.0;
+      
+      // Calculate how many pellets are behind Pac-Man's mouth
+      const progressThroughPellets = (pacmanMouthPosition + 5) / pelletRowWidth;
+      const eatenCount = Math.floor(Math.max(0, progressThroughPellets * totalPellets));
+      
+      const newEaten = new Set<number>();
+      for (let i = 0; i < Math.min(eatenCount, totalPellets); i++) {
+        newEaten.add(i);
+      }
+      
+      // Determine which ghosts are eaten based on Pac-Man mouth position
+      const ghostPositions = [15, 30, 50, 70, 85]; // Approximate positions where ghosts are
+      const newEatenGhosts = new Set<number>();
+      ghostPositions.forEach((ghostPos, idx) => {
+        // Ghost gets eaten when Pac-Man's mouth reaches it and stays eaten for a while
+        if (pacmanMouthPosition >= ghostPos - 1 && pacmanMouthPosition <= ghostPos + 8) {
+          newEatenGhosts.add(idx);
+        }
+      });
+      
+      // Reset when animation loops (at the very start)
+      if (progress < 0.005) {
+        setEatenPellets(new Set());
+        setEatenGhosts(new Set());
+      } else {
+        setEatenPellets(newEaten);
+        setEatenGhosts(newEatenGhosts);
+      }
+      
+      requestAnimationFrame(animate);
+    };
+    
+    const animationId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationId);
+  }, []);
+
 
   // Detect system theme preference
   useEffect(() => {
@@ -162,7 +358,7 @@ const LandingPage = () => {
 
   const renderOverlay = () => {
     if (openCard === null) return null;
-    const event = events[openCard];
+    const event = sortedEvents[openCard];
     return (
       <div
         className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70"
@@ -270,67 +466,88 @@ const LandingPage = () => {
       <img
         src="/greenghost.png"
         alt="Left Decor"
-        className="absolute z-30 animate-bounce"
+        className="absolute z-30"
         style={{
           width: "min(1.8vw, 28px)",
           height: "min(1.8vw, 28px)",
           top: "70vh",
-          right: "13.4vw"
+          right: "13.4vw",
+          animation: "ghostFloat 3s ease-in-out infinite",
+          opacity: eatenGhosts.has(0) ? 0 : 1,
+          transform: eatenGhosts.has(0) ? "scale(0.2)" : "scale(1)",
+          transition: "opacity 0.2s ease-out, transform 0.2s ease-out",
         }}
       />
       <img
         src="/redghost.png.png"
         alt="Left Decor"
-        className="absolute z-30 animate-bounce"
+        className="absolute z-30"
         style={{
           width: "min(2vw, 32px)",
           height: "min(2vw, 32px)",
           top: "21.5vh",
-          left: "13.1vw"
+          left: "13.1vw",
+          animation: "ghostFloat 2.5s ease-in-out infinite 0.5s",
+          opacity: eatenGhosts.has(1) ? 0 : 1,
+          transform: eatenGhosts.has(1) ? "scale(0.2)" : "scale(1)",
+          transition: "opacity 0.2s ease-out, transform 0.2s ease-out",
         }}
       />
       <img
         src="/ghost.png"
         alt="Left Decor"
-        className="absolute z-30 animate-bounce"
+        className="absolute z-30"
         style={{
           width: "min(2.5vw, 40px)",
           height: "min(2.1vw, 33px)",
           top: "43vh",
-          left: "10.5vw"
+          left: "10.5vw",
+          animation: "ghostFloat 3.5s ease-in-out infinite 1s",
+          opacity: eatenGhosts.has(2) ? 0 : 1,
+          transform: eatenGhosts.has(2) ? "scale(0.2)" : "scale(1)",
+          transition: "opacity 0.2s ease-out, transform 0.2s ease-out",
         }}
       />
       <img
         src="/yellowghost.png"
         alt="Left Decor"
-        className="absolute z-30 animate-bounce"
+        className="absolute z-30"
         style={{
           width: "min(2vw, 32px)",
           height: "min(2vw, 32px)",
           top: "68vh",
-          left: "13.8vw"
+          left: "13.8vw",
+          animation: "ghostFloat 2.8s ease-in-out infinite 0.3s",
+          opacity: eatenGhosts.has(3) ? 0 : 1,
+          transform: eatenGhosts.has(3) ? "scale(0.2)" : "scale(1)",
+          transition: "opacity 0.2s ease-out, transform 0.2s ease-out",
         }}
       />
       <img
         src="/blueghost.png"
         alt="Right Decor"
-        className="absolute z-30 animate-bounce"
+        className="absolute z-30"
         style={{
           width: "min(2vw, 32px)",
           height: "min(2vw, 32px)",
           top: "24vh",
-          right: "12.4vw"
+          right: "12.4vw",
+          animation: "ghostFloat 3.2s ease-in-out infinite 0.7s",
+          opacity: eatenGhosts.has(4) ? 0 : 1,
+          transform: eatenGhosts.has(4) ? "scale(0.2)" : "scale(1)",
+          transition: "opacity 0.2s ease-out, transform 0.2s ease-out",
         }}
       />
       <img
         src="/yellowghost.png"
         alt="Right Decor"
-        className="absolute z-30 animate-bounce"
+        className="absolute z-30"
         style={{
           width: "min(2vw, 32px)",
           height: "min(2vw, 32px)",
           top: "51vh",
-          right: "8.8vw"
+          right: "8.8vw",
+          animation: "ghostFloat 2.6s ease-in-out infinite 1.2s",
         }}
       />
 
@@ -344,7 +561,7 @@ const LandingPage = () => {
         {/* First row of 3 event boxes */}
         <div className="flex flex-row justify-center mb-2"
           style={{ gap: "min(2vw, 32px)" }}>
-          {events.slice(0, 3).map((event, i) => (
+          {sortedEvents.slice(0, 3).map((event, i) => (
             <div
               key={i}
               className={`${getCardClass(event)} flex flex-col items-center text-center`}
@@ -362,9 +579,41 @@ const LandingPage = () => {
                 boxSizing: "border-box",
                 border: `14px solid ${event.borderColor}`,
               }}
-              onClick={() => setOpenCard(i)}
+              onClick={() => setOpenCard(sortedEvents.indexOf(event))}
             >
-              <span style={{ fontSize: "min(1.6vw, 24px)" }}>{event.title}</span>
+              <div
+                style={{
+                  position: "absolute",
+                  top: "5px",
+                  left: "5px",
+                  backgroundColor: isUpcoming(event) ? "#4ade80" : "#f87171",
+                  color: "white",
+                  padding: "3px 6px",
+                  borderRadius: "3px",
+                  fontSize: "min(0.8vw, 10px)",
+                  fontWeight: "bold",
+                  zIndex: 10,
+                }}
+              >
+                {isUpcoming(event) ? "UPCOMING" : "PAST"}
+              </div>
+              <div
+                style={{
+                  position: "absolute",
+                  top: "5px",
+                  right: "5px",
+                  backgroundColor: "rgba(0, 0, 0, 0.7)",
+                  color: "white",
+                  padding: "3px 6px",
+                  borderRadius: "3px",
+                  fontSize: "min(0.7vw, 9px)",
+                  fontWeight: "normal",
+                  zIndex: 10,
+                }}
+              >
+                {formatEventDate(event.startDate)}
+              </div>
+              <span style={{ fontSize: "min(1.6vw, 24px)", marginTop: "35px" }}>{event.title}</span>
               <p
                 className="info-text font-normal mt-4"
                 style={{
@@ -388,30 +637,37 @@ const LandingPage = () => {
               width: "min(3.2vw, 48px)",
               height: "min(3.2vw, 48px)",
               position: "absolute",
-              left: 0,
+              left: `${pacmanPosition}%`,
               top: "50%",
               transform: "translateY(-50%)",
               zIndex: 20,
+              transition: "none",
             }}
           />
           <div className="pellets-row">
             <div className="pellets-inner">
-              {[...Array(48)].map((_, i) => (
+              {[...Array(96)].map((_, i) => (
                 <div
                   key={i}
                   style={{
                     width: "min(1.05vw, 16px)",
-                    height: "min(1.05vw, 16px)"
+                    height: "min(1.05vw, 16px)",
+                    opacity: eatenPellets.has(i) ? 0 : 1,
+                    transform: eatenPellets.has(i) ? "scale(0)" : "scale(1)",
+                    transition: "opacity 0.1s ease-out, transform 0.1s ease-out",
                   }}
                   className="bg-yellow-300 rounded-full shadow"
                 ></div>
               ))}
               {[...Array(48)].map((_, i) => (
                 <div
-                  key={i + 48}
+                  key={i + 96}
                   style={{
                     width: "min(1.05vw, 16px)",
-                    height: "min(1.05vw, 16px)"
+                    height: "min(1.05vw, 16px)",
+                    opacity: eatenPellets.has(i + 96) ? 0 : 1,
+                    transform: eatenPellets.has(i + 96) ? "scale(0)" : "scale(1)",
+                    transition: "opacity 0.1s ease-out, transform 0.1s ease-out",
                   }}
                   className="bg-yellow-300 rounded-full shadow"
                 ></div>
@@ -423,7 +679,7 @@ const LandingPage = () => {
         {/* Second row of 3 event boxes */}
         <div className="flex flex-row justify-center mt-2 mb-16"
           style={{ gap: "min(2vw, 32px)" }}>
-          {events.slice(3, 6).map((event, i) => (
+          {sortedEvents.slice(3, 6).map((event, i) => (
             <div
               key={i + 3}
               className={`${getCardClass(event)} flex flex-col items-center text-center`}
@@ -441,9 +697,41 @@ const LandingPage = () => {
                 boxSizing: "border-box",
                 border: `12px solid ${event.borderColor}`,
               }}
-              onClick={() => setOpenCard(i + 3)}
+              onClick={() => setOpenCard(sortedEvents.indexOf(event))}
             >
-              <span style={{ fontSize: "min(1.6vw, 24px)" }}>{event.title}</span>
+              <div
+                style={{
+                  position: "absolute",
+                  top: "5px",
+                  left: "5px",
+                  backgroundColor: isUpcoming(event) ? "#4ade80" : "#f87171",
+                  color: "white",
+                  padding: "3px 6px",
+                  borderRadius: "3px",
+                  fontSize: "min(0.8vw, 10px)",
+                  fontWeight: "bold",
+                  zIndex: 10,
+                }}
+              >
+                {isUpcoming(event) ? "UPCOMING" : "PAST"}
+              </div>
+              <div
+                style={{
+                  position: "absolute",
+                  top: "5px",
+                  right: "5px",
+                  backgroundColor: "rgba(0, 0, 0, 0.7)",
+                  color: "white",
+                  padding: "3px 6px",
+                  borderRadius: "3px",
+                  fontSize: "min(0.7vw, 9px)",
+                  fontWeight: "normal",
+                  zIndex: 10,
+                }}
+              >
+                {formatEventDate(event.startDate)}
+              </div>
+              <span style={{ fontSize: "min(1.6vw, 24px)", marginTop: "35px" }}>{event.title}</span>
               <p
                 className="info-text font-normal mt-4"
                 style={{
@@ -503,7 +791,8 @@ const LandingPage = () => {
         className="absolute top-20 left-20 z-50"
         style={{
           width: "min(2.1vw, 32px)",
-          height: "min(2.1vw, 32px)"
+          height: "min(2.1vw, 32px)",
+          animation: "ghostWobble 4s ease-in-out infinite",
         }}
       />
       <img
@@ -512,7 +801,8 @@ const LandingPage = () => {
         className="absolute top-20 right-20 z-50"
         style={{
           width: "min(2.1vw, 32px)",
-          height: "min(2.1vw, 32px)"
+          height: "min(2.1vw, 32px)",
+          animation: "ghostWobble 3.5s ease-in-out infinite 0.5s",
         }}
       />
       <img
@@ -521,7 +811,8 @@ const LandingPage = () => {
         className="absolute bottom-24 left-20 z-50"
         style={{
           width: "min(2.1vw, 32px)",
-          height: "min(2.1vw, 32px)"
+          height: "min(2.1vw, 32px)",
+          animation: "ghostWobble 4.2s ease-in-out infinite 1s",
         }}
       />
       <img
@@ -530,7 +821,8 @@ const LandingPage = () => {
         className="absolute bottom-20 right-20 z-50"
         style={{
           width: "min(2.1vw, 32px)",
-          height: "min(2.1vw, 32px)"
+          height: "min(2.1vw, 32px)",
+          animation: "ghostWobble 3.8s ease-in-out infinite 1.5s",
         }}
       />
 
