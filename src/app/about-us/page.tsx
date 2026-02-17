@@ -73,19 +73,20 @@ const MysteryCard = ({
       .mystery-card {
         width: 320px;
         height: 290px;
-        border: 10px solid;
-        il: 0;
+        border: 4px solid;
         position: relative;
         display: flex;
         flex-direction: column;
         opacity: 1;
         cursor: default;
         transition: all 0.3s ease;
-        box-shadow: 0 0 0 4px var(--dot-color-transparent, #00000050);
         overflow: hidden;
         background-clip: padding-box;
         margin: 0;
         flex: 0 0 auto;
+        /* Double border effect using outline */
+        outline: 4px solid;
+        outline-offset: -8px;
       }
       .inner-panel {
         position: absolute;
@@ -94,13 +95,13 @@ const MysteryCard = ({
         z-index: 8;
       }
       .corner-dot {
-        width: 22px; height: 22px; border-radius: 0;
+        width: 14px; height: 14px; border-radius: 0;
         position: absolute; z-index: 3;
       }
-      .top-left { top: 28px; left: 28px;}
-      .top-right { top: 28px; right: 28px;}
-      .bottom-left { bottom: 28px; left: 28px;}
-      .bottom-right { bottom: 28px; right: 28px;}
+      .top-left { top: 8px; left: 8px;}
+      .top-right { top: 8px; right: 8px;}
+      .bottom-left { bottom: 8px; left: 8px;}
+      .bottom-right { bottom: 8px; right: 8px;}
       .fixed-title {
         position: absolute; top: 22px; left: 0; right: 0;
         text-align: center; z-index: 25; pointer-events: none;
