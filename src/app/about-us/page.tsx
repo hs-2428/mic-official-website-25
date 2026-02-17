@@ -57,7 +57,7 @@ const MysteryCard = ({
     style={{
       background: frameColor,
       borderColor: frameColor,
-      boxShadow: `0 0 0 4px ${dotColor}50`,
+      border: `14px solid ${frameColor}`,
       ...style,
     }}
   >
@@ -73,20 +73,32 @@ const MysteryCard = ({
       .mystery-card {
         width: 320px;
         height: 290px;
-        border: 4px solid;
         position: relative;
         display: flex;
         flex-direction: column;
         opacity: 1;
         cursor: default;
         transition: all 0.3s ease;
-        overflow: hidden;
+        overflow: visible;
         background-clip: padding-box;
         margin: 0;
         flex: 0 0 auto;
-        /* Double border effect using outline */
-        outline: 4px solid;
-        outline-offset: -8px;
+        /* Pixelated corners like event cards */
+        --step: 24px;
+        clip-path: polygon(
+          0 var(--step),
+          var(--step) var(--step),
+          var(--step) 0,
+          calc(100% - var(--step)) 0,
+          calc(100% - var(--step)) var(--step),
+          100% var(--step),
+          100% calc(100% - var(--step)),
+          calc(100% - var(--step)) calc(100% - var(--step)),
+          calc(100% - var(--step)) 100%,
+          var(--step) 100%,
+          var(--step) calc(100% - var(--step)),
+          0 calc(100% - var(--step))
+        );
       }
       .inner-panel {
         position: absolute;
@@ -95,13 +107,13 @@ const MysteryCard = ({
         z-index: 8;
       }
       .corner-dot {
-        width: 14px; height: 14px; border-radius: 0;
-        position: absolute; z-index: 3;
+        width: 12px; height: 12px; border-radius: 50%;
+        position: absolute; z-index: 20;
       }
-      .top-left { top: 8px; left: 8px;}
-      .top-right { top: 8px; right: 8px;}
-      .bottom-left { bottom: 8px; left: 8px;}
-      .bottom-right { bottom: 8px; right: 8px;}
+      .top-left { top: 6px; left: 6px;}
+      .top-right { top: 6px; right: 6px;}
+      .bottom-left { bottom: 6px; left: 6px;}
+      .bottom-right { bottom: 6px; right: 6px;}
       .fixed-title {
         position: absolute; top: 22px; left: 0; right: 0;
         text-align: center; z-index: 25; pointer-events: none;
@@ -131,12 +143,12 @@ const MysteryCard = ({
       .group:hover .fixed-title { opacity: 1; }
       .group:hover .scrollable-content { opacity: 1; }
       @media (max-width: 900px) {
-        .mystery-card { width: 245px; height: 205px;}
-        .corner-dot { width: 16px; height: 16px;}
-        .top-left { top: 13px; left: 13px;}
-        .top-right { top: 13px; right: 13px;}
-        .bottom-left { bottom: 13px; left: 13px;}
-        .bottom-right { bottom: 13px; right: 13px;}
+        .mystery-card { width: 245px; height: 205px; --step: 18px;}
+        .corner-dot { width: 10px; height: 10px; border-radius: 50%;}
+        .top-left { top: 5px; left: 5px;}
+        .top-right { top: 5px; right: 5px;}
+        .bottom-left { bottom: 5px; left: 5px;}
+        .bottom-right { bottom: 5px; right: 5px;}
         .fixed-title h3 { font-size: 1.07rem;}
         .fixed-title { top: 10px;}
         .scrollable-content { top: 42px; left: 12px; right: 12px; bottom: 12px;}
